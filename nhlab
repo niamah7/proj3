@@ -1,0 +1,216 @@
+// project2.cpp : This file contains the 'main' function. Program execution begins and ends there.
+//niamah 
+
+#include <iostream>
+#include <fstream>
+#include <string>
+#include <iomanip>
+
+using namespace std;
+
+// Define the Room structure
+struct Room
+{
+    string roomNumber;     // Room identification
+    int floorNumber;       // Floor number
+    int occupancy;         // Current number of occupants
+    int codeLimit;         // Maximum number of occupants allowed by fire code
+};
+
+//function to validate hotel info file
+bool validateRoom(const Room& room string& errorMessage) 
+{
+    bool isValid = true;
+
+    if (room.floorNumber <= 0) {
+        cout << "Invalid floor number, " << room.floorNumber << ", for room " << room.roomNumber << endl;
+        isValid = false;
+    }
+    if (room.codeLimit <= 0) {
+        cout << "Invalid code limit, " << room.codeLimit << ", for room " << room.roomNumber << endl;
+        isValid = false;
+    }
+    if (room.occupancy < 0) {
+        cout << "Invalid occupancy, " << room.occupancy << ", for room " << room.roomNumber << endl;
+        isValid = false;
+    }
+    if (room.occupancy > room.codeLimit) {
+        cout << "Invalid occupancy, " << room.occupancy << ", cannot exceed limit, " << room.codeLimit << ", for room " << room.roomNumber << endl;
+        isValid = false;
+    }
+    return isValid;
+}
+
+
+int main()
+{
+    //open first file with hotel data
+    ifstream inputFile;
+    string filename;
+
+    cout << "Identify the file containing the hotel definition: ";
+    getline(cin, filename);
+
+    inputFile.open(filename);
+    if (!inputFile) {
+        cout << "Error: Unable to open file " << filename << endl;
+        return 1;
+    }
+    // Read hotel name and break-even rate
+    string hotelName;
+    double breakEvenRate;
+    inputFile >> hotelName >> breakEvenRate;
+    if (inputFile.fail()) {
+        cerr << "Error: Failed to read hotel name and break-even rate from the file." << endl;
+        return 1;
+    }
+    //for hotel break even display
+    cout << fixed << setprecision(1);
+
+    //read and validate room data
+    Room room;
+    int totalRooms = 0;
+    int occupiedRooms = 0;
+    int totalOccupancy = 0;
+    int totalCapacity = 0;
+    while (inputFile >> room.roomNumber >> room.floorNumber >> room.occupancy >> room.codeLimit) {
+        string errorMessage;
+
+        if (validateRoom(room, errorMessage)) {
+            totalRooms++;
+            totalOccupancy += room.occupancy;
+            totalCapacity += room.codeLimit;
+            if (room.occupancy > 0) {
+                occupiedRooms++;
+            }
+        }
+        else {
+            cout << errorMessage << endl;
+        }
+    }
+
+
+    inputFile.close();
+
+    //calculate and display results
+    double occupancyRate = (totalCapacity > 0) ? (static_cast<double>(totalOccupancy) / totalCapacity) * 100 : 0.0;
+
+    cout << "The hotel " << hotelName << " has " << totalRooms << " rooms; break-even rate is " << breakEvenRate * 100 << "%." << endl;
+    cout << "There are " << occupiedRooms << " occupied rooms with an occupancy rate of " << fixed << setprecision (1) << occupancyRate << "%." << endl;
+
+    if (occupancyRate >= breakEvenRate * 100)
+    {
+        cout << "Hotel " << hotelName << " is profitable." << endl;
+    }
+    else 
+    {
+        cout << "Hotel " << hotelName << " is not profitable." << endl;
+    }
+
+    //open guest file
+
+    ifstream inputFile;
+    string filename;
+
+    cout << "Identify the file containing guest transactions:  ";
+    getline(cin, filename);
+
+    inputFile.open(filename);
+    if (!inputFile) {
+        cout << "Error: Unable to open file " << filename << endl;
+        return 1;
+    }
+
+    // Function to process guest transactions
+        void processTransactions(const string & filename, Room rooms[], int roomCount)
+        {
+        ifstream transactionFile(filename);
+        if (!transactionFile)
+        {
+            cout << "Error: Unable to open transaction file " << filename << endl;
+            return;
+        }
+
+        string transactionCode, roomNumber;
+        int guests;
+        while (transactionFile >> transactionCode >> roomNumber >> guests)
+        {
+            // Validate transaction code
+            if (transactionCode != "CI" && transactionCode != "CO")
+            {
+                cout << "Invalid transaction code: " << transactionCode << " for room " << roomNumber << endl;
+                continue;
+            }
+
+        
+            //find the room in the file 
+            for (int i = 0; i < roomCount; ++i) {
+                if (rooms[i].roomNumber == roomNumber) {
+                    roomFound = true;
+                    if (transactionCode == "CI") {
+                        if (rooms[i].occupancy + guests > rooms[i].codeLimit) {
+                            cout << "Invalid attempt to check in " << guests << " guests into room " << roomNumber << ". The code limit for room " << roomNumber << " is " << rooms[i].codeLimit << ". There are already " << rooms[i].occupancy << " guests in that room." << endl;
+                        }
+                        else {
+                            rooms[i].occupancy += guests;
+                        }
+                    }
+                    else if (transactionCode == "CO") {
+                        if (rooms[i].occupancy - guests < 0) {
+                            cout << "Invalid attempt to check out " << guests << " guests from room " << roomNumber << ". There are only " << rooms[i].occupancy << " guests in that room." << endl;
+                        }
+                        else {
+                            rooms[i].occupancy -= guests;
+                        }
+                    }
+                    break;
+                }
+            }
+
+            if (!roomFound) 
+            {
+                cout << "Invalid room number: " << roomNumber << endl;
+            }
+        }
+        // function to calculate how many maid are needed , 1 maid per 8 guests 
+        void calculateTotalMaids(const Room rooms[], int roomCount)
+        {
+            int totalGuests = 0;
+
+            
+            for (int i = 0; i < roomCount; ++i)
+            {
+                totalGuests += rooms[i].occupancy;
+            }
+
+            
+            int totalMaids = (totalGuests + 7) / 8; // One maid for every 8 guests, rounded up
+
+            // Display the result
+            cout << "There are " << totalGuests << " guests creating a requirement for "
+                << totalMaids << " maid(s)." << endl;
+        }
+        
+        
+
+
+
+
+
+
+
+
+
+
+
+
+// Run program: Ctrl + F5 or Debug > Start Without Debugging menu
+// Debug program: F5 or Debug > Start Debugging menu
+
+// Tips for Getting Started: 
+//   1. Use the Solution Explorer window to add/manage files
+//   2. Use the Team Explorer window to connect to source control
+//   3. Use the Output window to see build output and other messages
+//   4. Use the Error List window to view errors
+//   5. Go to Project > Add New Item to create new code files, or Project > Add Existing Item to add existing code files to the project
+//   6. In the future, to open this project again, go to File > Open > Project and select the .sln file
